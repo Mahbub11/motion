@@ -9,6 +9,7 @@ import { v4 } from 'uuid';
 import { createFolder } from '@/lib/supabase/queries';
 // import { useToast } from '../ui/use-toast';
 import { Accordion } from '../ui/accordion';
+import { useAppState } from '@/lib/providers/state-provider';
 import Dropdown from './Dropdown';
 // // import useSupabaseRealtime from '@/lib/hooks/useSupabaseRealtime';
 // import { useSubscriptionModal } from '@/lib/providers/subscription-modal-provider';
@@ -23,38 +24,38 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
   workspaceId,
 }) => {
   // useSupabaseRealtime();
-  // const { state, dispatch, folderId } = useAppState();
+  const { state, dispatch, folderId } = useAppState();
   // const { open, setOpen } = useSubscriptionModal();
   // const { toast } = useToast();
   const [folders, setFolders] = useState(workspaceFolders);
   const { subscription } = useSupabaseUser();
 
   //effec set nitial satte server app state
-  // useEffect(() => {
-  //   if (workspaceFolders.length > 0) {
-  //     dispatch({
-  //       type: 'SET_FOLDERS',
-  //       payload: {
-  //         workspaceId,
-  //         folders: workspaceFolders.map((folder) => ({
-  //           ...folder,
-  //           files:
-  //             state.workspaces
-  //               .find((workspace) => workspace.id === workspaceId)
-  //               ?.folders.find((f) => f.id === folder.id)?.files || [],
-  //         })),
-  //       },
-  //     });
-  //   }
-  // }, [workspaceFolders, workspaceId]);
+  useEffect(() => {
+    if (workspaceFolders.length > 0) {
+      dispatch({
+        type: 'SET_FOLDERS',
+        payload: {
+          workspaceId,
+          folders: workspaceFolders.map((folder) => ({
+            ...folder,
+            files:
+              state.workspaces
+                .find((workspace) => workspace.id === workspaceId)
+                ?.folders.find((f) => f.id === folder.id)?.files || [],
+          })),
+        },
+      });
+    }
+  }, [workspaceFolders, workspaceId]);
   //state
 
-  // useEffect(() => {
-  //   setFolders(
-  //     state.workspaces.find((workspace) => workspace.id === workspaceId)
-  //       ?.folders || []
-  //   );
-  // }, [state]);
+  useEffect(() => {
+    setFolders(
+      state.workspaces.find((workspace) => workspace.id === workspaceId)
+        ?.folders || []
+    );
+  }, [state]);
 
   //add folder
   const addFolderHandler = async () => {
@@ -72,10 +73,10 @@ const FoldersDropdownList: React.FC<FoldersDropdownListProps> = ({
       workspaceId,
       bannerUrl: '',
     };
-    // dispatch({
-    //   type: 'ADD_FOLDER',
-    //   payload: { workspaceId, folder: { ...newFolder, files: [] } },
-    // });
+    dispatch({
+      type: 'ADD_FOLDER',
+      payload: { workspaceId, folder: { ...newFolder, files: [] } },
+    });
      const { data, error } = await createFolder(newFolder);
     // if (error) {
     //   toast({

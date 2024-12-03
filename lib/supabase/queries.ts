@@ -1,9 +1,9 @@
 'use server'
-import { folders, users, workspaces } from "@/migrations/schema";
+import { files, folders, users, workspaces } from "@/migrations/schema";
 import db from "./db";
-import { Folder, Subscription, User, workspace } from "./supabase.types";
+import { File, Folder, Subscription, User, workspace } from "./supabase.types";
 import { validate } from "uuid";
-import { and, eq, notExists } from "drizzle-orm";
+import { and, eq, ilike, notExists } from "drizzle-orm";
 import { collaborators } from "./schema";
 
 export const getUserSubscriptionStatus = async (userId: string) => {
@@ -49,6 +49,9 @@ export const getFolders = async (workspaceId: string) => {
   }
 };
 
+// get all workspaces,
+// go colaborators table and collect all workspaceid == colaborators.workspaceid
+// now workspacesOwner= userID
 export const getPrivateWorkspaces = async (userId: string) => {
   if (!userId) return [];
   const privateWorkspaces = (await db
@@ -78,9 +81,14 @@ export const getPrivateWorkspaces = async (userId: string) => {
   return privateWorkspaces;
 };
 
+
+// get colaborators where user is present
+// then select workspaces where workspaceid= colaborators.workspaceid
+// from the workspace now pull userId=workspace.workspaceOwnerId
 export const getCollaboratingWorkspaces = async (userId: string) => {
-  if (!userId) return [];
-  const collaboratedWorkspaces = (await db
+  if (!userId) return []; // If no userId, return an empty array
+  
+  const collaboratedWorkspaces = await db
     .select({
       id: workspaces.id,
       createdAt: workspaces.createdAt,
@@ -92,12 +100,14 @@ export const getCollaboratingWorkspaces = async (userId: string) => {
       logo: workspaces.logo,
       bannerUrl: workspaces.bannerUrl,
     })
-    .from(users)
-    .innerJoin(collaborators, eq(users.id, collaborators.userId))
-    .innerJoin(workspaces, eq(collaborators.workspaceId, workspaces.id))
-    .where(eq(users.id, userId))) as workspace[];
+    .from(workspaces) // Start with the workspaces table
+    .innerJoin(collaborators, eq(workspaces.id, collaborators.workspaceId)) // Join with the collaborators table
+    .where(eq(collaborators.userId, userId)) // Only join rows where the user is a collaborator
+    .orderBy(workspaces.createdAt) as workspace[]; // Optionally, order by creation time for sorting
+
   return collaboratedWorkspaces;
 };
+
 
 export const getSharedWorkspaces = async (userId: string) => {
   if (!userId) return [];
@@ -158,5 +168,66 @@ export const createFolder = async (folder: Folder) => {
   } catch (error) {
     console.log(error);
     return { data: null, error: 'Error' };
+  }
+};
+
+export const getFiles = async (folderId: string) => {
+  const isValid = validate(folderId);
+  if (!isValid) return { data: null, error: "Error" };
+  try {
+    const results = (await db
+      .select()
+      .from(files)
+      .orderBy(files.createdAt)
+      .where(eq(files.folderId, folderId))) as File[] | [];
+    return { data: results, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const getUsersFromSearch = async (email: string) => {
+  if (!email) return [];
+  const accounts = db
+    .select()
+    .from(users)
+    .where(ilike(users.email, `${email}%`));
+  return accounts;
+};
+
+export const createFile = async (file: File) => {
+  try {
+    await db.insert(files).values(file);
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateFolder = async (
+  folder: Partial<Folder>,
+  folderId: string
+) => {
+  try {
+    await db.update(folders).set(folder).where(eq(folders.id, folderId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
+  }
+};
+
+export const updateFile = async (file: Partial<File>, fileId: string) => {
+  try {
+    const response = await db
+      .update(files)
+      .set(file)
+      .where(eq(files.id, fileId));
+    return { data: null, error: null };
+  } catch (error) {
+    console.log(error);
+    return { data: null, error: "Error" };
   }
 };

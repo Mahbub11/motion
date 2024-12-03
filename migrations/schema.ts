@@ -124,28 +124,26 @@ export const users = pgTable("users", {
 	email: text(),
 	updatedAt: timestamp("updated_at", { withTimezone: true, mode: 'string' }),
 });
+export const customers = pgTable('customers', {
+	id: uuid('id').primaryKey().notNull(),
+	stripeCustomerId: text('stripe_customer_id'),
+  });
+  
 
-export const files = pgTable("files", {
-	id: uuid().defaultRandom().primaryKey().notNull(),
-	createdAt: timestamp("created_at", { withTimezone: true, mode: 'string' }).defaultNow().notNull(),
-	title: text().notNull(),
-	iconId: text("icon_id").notNull(),
-	data: text(),
-	inTrash: text("in_trash"),
-	bannerUrl: text("banner_url"),
-	workspaceId: uuid("workspace_id").notNull(),
-	folderId: uuid("folder_id").notNull(),
-}, (table) => {
-	return {
-		filesFolderIdFoldersIdFk: foreignKey({
-			columns: [table.folderId],
-			foreignColumns: [folders.id],
-			name: "files_folder_id_folders_id_fk"
-		}).onDelete("cascade"),
-		filesWorkspaceIdWorkspacesIdFk: foreignKey({
-			columns: [table.workspaceId],
-			foreignColumns: [workspaces.id],
-			name: "files_workspace_id_workspaces_id_fk"
-		}).onDelete("cascade"),
-	}
-});
+  export const files = pgTable('files', {
+	id: uuid('id').defaultRandom().primaryKey().notNull(),
+	createdAt: timestamp('created_at', { withTimezone: true, mode: 'string' })
+	  .defaultNow()
+	  .notNull(),
+	title: text('title').notNull(),
+	iconId: text('icon_id').notNull(),
+	data: text('data'),
+	inTrash: text('in_trash'),
+	bannerUrl: text('banner_url'),
+	workspaceId: uuid('workspace_id')
+	  .notNull()
+	  .references(() => workspaces.id, { onDelete: 'cascade' }),
+	folderId: uuid('folder_id')
+	  .notNull()
+	  .references(() => folders.id, { onDelete: 'cascade' }),
+  });

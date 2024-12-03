@@ -12,7 +12,7 @@ interface NativeNavigationProps {
   className?: string;
 }
 
-const NativeNavigation: React.FC<NativeNavigationProps> = ({
+const  NativeNavigation: React.FC<NativeNavigationProps> = ({
   myWorkspaceId,
   className,
 }) => {

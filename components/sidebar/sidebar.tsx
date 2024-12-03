@@ -11,12 +11,12 @@ import {
 import { redirect } from 'next/navigation';
 import { twMerge } from 'tailwind-merge';
 import WorkspaceDropdown from './workspace-dropdown';
-// import PlanUsage from './plan-usage';
 import NativeNavigation from './native-navigation';
 import { ScrollArea } from '../ui/scroll-area';
 import FoldersDropdownList from './folders-dropdown-list';
 import UserCard from './user-card';
 import { createClient } from '@/lib/supabase/server-connection';
+import PlanUsage from './plan-usage';
 
 interface SidebarProps {
   params: { workspaceId: string };
@@ -24,7 +24,7 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
-  const supabase =await createClient()
+  const supabase = await createClient()
   //user
   const {
     data: { user },
@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
   );
   //error
   if (subscriptionError || foldersError) redirect('/dashboard');
-
+  //get all the different workspaces private collaborating shared
   const [privateWorkspaces, collaboratingWorkspaces, sharedWorkspaces] =
     await Promise.all([
       getPrivateWorkspaces(user.id),
@@ -50,7 +50,9 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
       getSharedWorkspaces(user.id),
     ]);
 
-  //get all the different workspaces private collaborating shared
+
+
+
   return (
     <aside
       className={twMerge(
@@ -69,10 +71,10 @@ const Sidebar: React.FC<SidebarProps> = async ({ params, className }) => {
             ...sharedWorkspaces,
           ].find((workspace) => workspace.id === params.workspaceId)}
         />
-        {/* <PlanUsage
+        <PlanUsage
           foldersLength={workspaceFolderData?.length || 0}
           subscription={subscriptionData}
-        /> */}
+        />
         <NativeNavigation myWorkspaceId={params.workspaceId} />
         <ScrollArea
           className="overflow-scroll relative

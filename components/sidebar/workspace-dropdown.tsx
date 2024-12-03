@@ -3,7 +3,8 @@ import { workspace } from '@/lib/supabase/supabase.types';
 import React, { useEffect, useState } from 'react';
 import SelectedWorkspace from './selected-workspace';
 import CustomDialogTrigger from '@/components/global/custom-dialog-trigger';
-import WorkspaceCreator from '@/components/sidebar/workspace-creator';
+import WorkspaceCreator from '@/components/global/workspace-creator';
+import { useAppState } from '@/lib/providers/state-provider';
 
 interface WorkspaceDropdownProps {
   privateWorkspaces: workspace[] | [];
@@ -21,15 +22,27 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = ({
 
   const [selectedOption, setSelectedOption] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
+  const { dispatch, state } = useAppState();
 
-
+  useEffect(() => {
+    if (!state.workspaces.length ) {
+      dispatch({
+        type: 'SET_WORKSPACES',
+        payload: {
+          workspaces: [
+            ...privateWorkspaces,
+            ...sharedWorkspaces,
+            ...collaboratingWorkspaces,
+          ].map((workspace) => ({ ...workspace, folders: [] })),
+        },
+      });
+    }
+  }, [privateWorkspaces, collaboratingWorkspaces, sharedWorkspaces]);
 
   const handleSelect = (option: workspace) => {
     setSelectedOption(option);
     setIsOpen(false);
   };
-
-
 
   return (
     <div
@@ -61,7 +74,7 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = ({
           overflow-scroll
           border-[1px]
           border-muted
-      "
+        "
         >
           <div className="rounded-md flex flex-col">
             <div className="!p-2">
@@ -109,7 +122,7 @@ const WorkspaceDropdown: React.FC<WorkspaceDropdownProps> = ({
               header="Create A Workspace"
               content={<WorkspaceCreator />}
               description="Workspaces give you the power to collaborate with others. You can change your workspace privacy settings after creating the workspace too."
-             >
+            >
               <div
                 className="flex 
               transition-all 
